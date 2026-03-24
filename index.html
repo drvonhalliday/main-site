@@ -549,7 +549,7 @@
     color: var(--wheat);
     opacity: 0.5;
     position: relative;
-    top: 2px;
+    top: 5px;
     transition: opacity 0.3s, transform 0.3s;
   }
 
@@ -702,7 +702,7 @@
 
   /* ── FOOTER ── */
   .footer {
-    padding: 60px 40px;
+    padding: 36px 40px;
     border-top: 1px solid var(--glass-border);
     background: var(--soil-deep);
   }
@@ -710,9 +710,9 @@
   .footer-inner {
     max-width: 1100px;
     margin: 0 auto;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
   }
 
   .footer-brand {
@@ -720,6 +720,13 @@
     font-size: 1.1rem;
     font-weight: 500;
     color: var(--wheat);
+    display: flex;
+    align-items: center;
+  }
+
+  .footer-brand img {
+    position: relative;
+    top: 5px;
   }
 
   .footer-info {
@@ -737,6 +744,10 @@
   }
 
   .footer-info a:hover { color: var(--wheat); }
+
+  .footer-social {
+    justify-self: end;
+  }
 
   .footer-social a {
     display: inline-flex;
@@ -970,8 +981,8 @@
 
 <!-- ── FOOTER ── -->
 <footer class="footer">
-  <div class="footer-inner reveal">
-    <div class="footer-brand">Von Halliday Consulting</div>
+  <div class="footer-inner">
+    <div class="footer-brand"><img src="vh-logo.png" alt="VH" height="24" /></div>
     <div class="footer-info">
       Principal Consultant — Doson Reiche<br />
       <a href="mailto:Doson@vonhalliday.com">Doson@vonhalliday.com</a>
