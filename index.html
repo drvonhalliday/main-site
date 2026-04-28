@@ -426,6 +426,20 @@
     z-index: 1;
   }
 
+  #introCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  .intro .section-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+
   /* ── SERVICES ── */
   .services {
     background: linear-gradient(180deg, var(--soil-deep) 0%, var(--soil) 50%, var(--soil) 100%);
@@ -901,6 +915,7 @@
 
 <!-- ── INTRO ── -->
 <section class="intro">
+  <canvas id="introCanvas"></canvas>
   <div class="section-inner">
     <div class="intro-grid">
       <div>
@@ -915,7 +930,6 @@
         </ul>
       </div>
       <div class="intro-visual reveal reveal-delay-2">
-        <canvas id="introCanvas"></canvas>
         <canvas id="sealCanvas" class="seal-canvas"></canvas>
       </div>
     </div>
@@ -1116,9 +1130,12 @@ class AtmosphericField {
     this.blobs = [];
     this.count = opts.count || 8;
     this.color = opts.color || [201, 168, 76];
+    this.targetEl = opts.targetEl || null;
+    this.ox = 0.5;
+    this.oy = 0.5;
     this.resize();
     this.init();
-    window.addEventListener('resize', () => this.resize());
+    window.addEventListener('resize', () => { this.resize(); this.init(); });
   }
 
   resize() {
@@ -1131,19 +1148,30 @@ class AtmosphericField {
     this.ctx.scale(dpr, dpr);
     this.w = rect.width;
     this.h = rect.height;
+    if (this.targetEl) {
+      const tr = this.targetEl.getBoundingClientRect();
+      this.ox = (tr.left + tr.width / 2 - rect.left) / this.w;
+      this.oy = (tr.top + tr.height / 2 - rect.top) / this.h;
+      this.targetSize = Math.min(tr.width, tr.height);
+    }
   }
 
   init() {
+    const ox = this.ox * this.w;
+    const oy = this.oy * this.h;
+    const boundR = 0.45 * (this.targetSize || Math.min(this.w, this.h));
     this.blobs = [];
     for (let i = 0; i < this.count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * boundR;
       this.blobs.push({
-        x: Math.random() * this.w,
-        y: Math.random() * this.h,
+        x: ox + Math.cos(angle) * dist,
+        y: oy + Math.sin(angle) * dist,
         r: Math.random() * 150 + 80,
         vx: (Math.random() - 0.5) * 0.2,
         vy: (Math.random() - 0.5) * 0.15,
         phase: Math.random() * Math.PI * 2,
-        speed: Math.random() * 0.003 + 0.001,
+        speed: Math.random() * 0.0006 + 0.00015,
       });
     }
   }
@@ -1151,23 +1179,40 @@ class AtmosphericField {
   draw(time) {
     this.ctx.clearRect(0, 0, this.w, this.h);
     const [cr, cg, cb] = this.color;
+    const ox = this.ox * this.w;
+    const oy = this.oy * this.h;
+    const boundR = 0.45 * (this.targetSize || Math.min(this.w, this.h));
 
     for (const b of this.blobs) {
       b.x += b.vx;
       b.y += b.vy;
-      if (b.x < -b.r) b.x = this.w + b.r;
-      if (b.x > this.w + b.r) b.x = -b.r;
-      if (b.y < -b.r) b.y = this.h + b.r;
-      if (b.y > this.h + b.r) b.y = -b.r;
+      const dx = b.x - ox, dy = b.y - oy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > boundR) {
+        const nx = dx / dist, ny = dy / dist;
+        const dot = b.vx * nx + b.vy * ny;
+        b.vx -= 2 * dot * nx;
+        b.vy -= 2 * dot * ny;
+        b.x = ox + nx * boundR * 0.97;
+        b.y = oy + ny * boundR * 0.97;
+      }
 
-      const pulse = Math.sin(time * b.speed + b.phase) * 0.3 + 0.7;
-      const alpha = 0.04 * pulse;
+      const pulse = (Math.sin(time * b.speed + b.phase) + 1) / 2;
+      const alpha = 0.03 * pulse;
       const grad = this.ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
       grad.addColorStop(0, `rgba(${cr},${cg},${cb},${alpha})`);
       grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
       this.ctx.fillStyle = grad;
       this.ctx.fillRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
     }
+
+    this.ctx.globalCompositeOperation = 'destination-in';
+    const vg = this.ctx.createRadialGradient(ox, oy, 0, ox, oy, boundR);
+    vg.addColorStop(0.3, 'rgba(0,0,0,1)');
+    vg.addColorStop(1.0, 'rgba(0,0,0,0)');
+    this.ctx.fillStyle = vg;
+    this.ctx.fillRect(0, 0, this.w, this.h);
+    this.ctx.globalCompositeOperation = 'source-over';
   }
 }
 
@@ -1175,7 +1220,7 @@ class AtmosphericField {
 const heroField = new ParticleField(document.getElementById('heroCanvas'), {
   count: 80, maxAlpha: 0.35, speed: 0.25, connectDist: 140
 });
-const introAtmo = new AtmosphericField(document.getElementById('introCanvas'), { count: 6 });
+const introAtmo = new AtmosphericField(document.getElementById('introCanvas'), { count: 6, targetEl: document.querySelector('.intro-visual') });
 const ctaField = new ParticleField(document.getElementById('ctaCanvas'), {
   count: 40, maxAlpha: 0.25, speed: 0.2, connectDist: 100
 });
