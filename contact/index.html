@@ -553,9 +553,24 @@
     .page-content { padding: 90px 20px 40px; }
     .contact-form-card { padding: 32px 24px; }
   }
+
+  .page-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--soil-deep);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .page-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
 </style>
 </head>
 <body>
+<div class="page-overlay" id="pageOverlay"></div>
 
 <!-- ── NAVBAR ── -->
 <nav class="navbar">
@@ -653,14 +668,24 @@
 // ── MOBILE NAV ──
 const navToggle = document.getElementById('navToggle');
 const navLinks = document.getElementById('navLinks');
+const pageOverlay = document.getElementById('pageOverlay');
+
 navToggle.addEventListener('click', () => {
   navToggle.classList.toggle('active');
   navLinks.classList.toggle('open');
 });
+
 navLinks.querySelectorAll('a').forEach(a => {
-  a.addEventListener('click', () => {
-    navToggle.classList.remove('active');
-    navLinks.classList.remove('open');
+  a.addEventListener('click', (e) => {
+    const href = a.getAttribute('href');
+    if (!href || href === '#') {
+      navToggle.classList.remove('active');
+      navLinks.classList.remove('open');
+      return;
+    }
+    e.preventDefault();
+    pageOverlay.classList.add('visible');
+    setTimeout(() => { window.location.href = href; }, 380);
   });
 });
 

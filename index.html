@@ -879,9 +879,23 @@
     section { padding: 64px 20px; }
     .hero-title { font-size: 2.2rem; }
   }
+
+  .page-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--soil-deep);
+    z-index: 999;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .page-overlay.hidden {
+    opacity: 0;
+  }
 </style>
 </head>
 <body>
+<div class="page-overlay" id="pageOverlay"></div>
 
 <!-- ── NAVBAR ── -->
 <nav class="navbar" id="navbar">
@@ -1014,6 +1028,23 @@
 </footer>
 
 <script>
+// ── PAGE TRANSITION IN ──
+(function() {
+  const overlay = document.getElementById('pageOverlay');
+  if (window.location.hash) {
+    const target = document.querySelector(window.location.hash);
+    if (target) {
+      document.documentElement.style.scrollBehavior = 'auto';
+      target.scrollIntoView();
+      document.documentElement.style.scrollBehavior = '';
+    }
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 600);
+  }));
+})();
+
 // ── NAVBAR SCROLL ──
 const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
